@@ -22,7 +22,7 @@
 #     install("asyncio")
 #     import asyncio
 
-
+from os import system
 from random import randint, random
 from ursina import *
 # from panda3d import *
@@ -101,11 +101,19 @@ class sn(Entity):
                 x = camera.x + randint(-15,15),
                 y = camera.y + randint(-7,7),
                 texture = load_texture(self.te),
-                scale = (1,1,0.0001)
+                scale = (1,1,0.0001),
+                collider = "box"
             )
         else:
             pass
     def update(self):
+        global held_time_w
+        global held_time_s
+        global held_time_a
+        global held_time_d
+        global coin_count
+        global stm
+        
         self.spd = 0.01
         self.ti += 1/60
         global sn_entity
@@ -113,6 +121,18 @@ class sn(Entity):
             sn_entity -= 1
             destroy(self)
             return
+        if "render/scene/bax1" in str(self.intersects().entities):
+            coin_count -= 1
+            
+            held_time_w = 0
+            held_time_s = 0
+            held_time_a = 0
+            held_time_d = 0
+            stm -= 50
+            destroy(self)
+            return
+            
+        
         if self.set_ti < self.ti:
             a = randint(1,5)
             self.set_ti = randint(0,5)
@@ -308,7 +328,7 @@ class gun_(Entity):
             self.alpha = 0
     def input(self,key):
         global ba_count
-        if scl == 1:
+        if scl == 1 and gun == 1 :
             if key == "a":
                 if ba_count > 0:
                     ba_count -= 1
@@ -487,29 +507,13 @@ class coin(Entity):
             destroy(self)
             return
 
-class tip_1(Entity):
-    def __init__(self):
+class tip(Entity):
+    def __init__(self , id:int):
         super().__init__(
             model = "cube",
-            texture = "i_tip1",
+            texture = f"i_tip{id}",
             scale = (2,2,0.001),
-            position = (5,3,-0.1),
-        )
-class tip_2(Entity):
-    def __init__(self):
-        super().__init__(
-            model = "cube",
-            texture = "i_tip1",
-            scale = (2,2,0.001),
-            position = (8,3,-0.1),
-        )
-class tip_3(Entity):
-    def __init__(self):
-        super().__init__(
-            model = "cube",
-            texture = "i_tip1",
-            scale = (2,2,0.001),
-            position = (11,3,-0.1),
+            position = (5+id*3,3,-0.1),
         )
 
 class ba_count_box(Entity):
@@ -670,9 +674,7 @@ apple_count_box()
 apple_()
 item_apple()
 apple(y=3)
-tip_1()
-tip_2()
-tip_3()
+for i in range(3):tip(i+1)
 item_gun()
 item_box()
 out_line()
@@ -698,6 +700,14 @@ def update():
     global ba_count
     global apple_count
     global time1
+    global coin_count
+    
+    if coin_count < 0: coin_count = 0
+    print(f"""
+point: {coin_count}
+apple: {apple_count}
+bll  : {ba_count}
+    """)
 
     time1 += 1/60
     camera.x += (player.x-camera.x)/30
@@ -795,6 +805,7 @@ def update():
     tree()
     all_entity = grass_entity + sn_entity
     if hp <= 0:
+        coin_count -= 3
         Audio("s_oof.mp3").play()
         player.position = (randint(-100,100),randint(-100,100),0)
         hp = 100
@@ -809,6 +820,9 @@ def update():
         hp = 100
     if stm > 100:
         stm = 100
+        
+        
+    system('cls')
 def input(key):
     global hp
     global stm
@@ -820,5 +834,7 @@ def input(key):
                 stm += 5
                 apple_count -=1
                 Audio("s_apple_eat.mp3").play()
-Audio("s_main.mp3",loop = True).play()
+                
+Audio("s_main.mp3" , loop = True).play()
+
 app.run()
